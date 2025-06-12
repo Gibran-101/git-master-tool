@@ -1,6 +1,10 @@
 #!/bin/bash
 
-# Validate that input is not empty
+# ─────────────────────────────────────────────────────
+# Git Branch Management Utility
+# ─────────────────────────────────────────────────────
+
+# Helper: Validate non-empty input
 validator() {
     if [ -z "$1" ]; then
         echo "$2"
@@ -8,39 +12,36 @@ validator() {
     fi
 }
 
-# List all branches
+# List all local branches
 list_branches() {
     echo " Existing branches:"
     git branch --format="  %(refname:short)"
 }
 
-# Switch to a specific branch
+# Switch to a branch
 switch_branch() {
     list_branches
-    read -p "➡️ Enter the branch you want to switch to: " branch_name
+    read -p " Enter the branch you want to switch to: " branch_name
     validator "$branch_name" " Please provide a branch name." || return 1
 
     if git rev-parse --verify "$branch_name" >/dev/null 2>&1; then
         git switch "$branch_name"
-        echo " Switched to $branch_name"
+        echo " Switched to '$branch_name'"
     else
         echo " Branch '$branch_name' does not exist."
-        return 1
     fi
 }
 
-# Create a new branch
+# Create a new branch and optionally switch to it
 create_branch() {
     read -p " Enter the new branch name: " new_branch
     validator "$new_branch" " Branch name can't be empty." || return 1
 
     git checkout -b "$new_branch"
-    echo " Created branch $new_branch"
+    echo " Created branch '$new_branch'"
 
-    read -p " Switch to $new_branch now? (yes/no): " response
-    if [[ "$response" == "yes" ]]; then
-        git switch "$new_branch"
-    fi
+    read -p "➡️  Switch to '$new_branch' now? (yes/no): " response
+    [[ "$response" == "yes" ]] && git switch "$new_branch"
 }
 
 # Delete a branch
@@ -50,96 +51,85 @@ delete_branch() {
     validator "$branch_to_delete" " Please provide a branch name." || return 1
 
     if git rev-parse --verify "$branch_to_delete" >/dev/null 2>&1; then
-        read -p "⚠️ Are you sure you want to delete '$branch_to_delete'? Type 'yes' to confirm: " confirm
-        if [[ "$confirm" == "yes" ]]; then
-            git branch -d "$branch_to_delete"
-            echo " Branch '$branch_to_delete' deleted."
-        else
-            echo " Deletion cancelled."
-        fi
+        read -p "⚠️  Confirm deletion of '$branch_to_delete'? (yes): " confirm
+        [[ "$confirm" == "yes" ]] && git branch -d "$branch_to_delete" && echo "✅ Deleted '$branch_to_delete'" || echo "❌ Deletion cancelled."
     else
         echo " Branch '$branch_to_delete' does not exist."
-        return 1
     fi
 }
 
-# Merge one branch into another
+# Merge feature branch into base branch
 merge_branches() {
     list_branches
-    read -p " Enter the base branch (where you want to merge *into*): " base_branch
-    read -p " Enter the feature branch (you want to merge *from*): " feature_branch
+    read -p " Enter the base branch (merge INTO): " base
+    read -p " Enter the feature branch (merge FROM): " feature
 
-    validator "$base_branch" " Base branch is required." || return 1
-    validator "$feature_branch" " Feature branch is required." || return 1
+    validator "$base" " Base branch is required." || return 1
+    validator "$feature" " Feature branch is required." || return 1
 
-    if [[ "$base_branch" == "$feature_branch" ]]; then
+    if [[ "$base" == "$feature" ]]; then
         echo " Base and feature branches cannot be the same."
         return 1
     fi
 
-    # Verify both branches exist
-    if ! git rev-parse --verify "$base_branch" >/dev/null 2>&1 || \
-       ! git rev-parse --verify "$feature_branch" >/dev/null 2>&1; then
+    if git rev-parse --verify "$base" >/dev/null 2>&1 && git rev-parse --verify "$feature" >/dev/null 2>&1; then
+        git switch "$base"
+        git merge "$feature"
+        echo " Merged '$feature' into '$base'"
+    else
         echo " One or both branches do not exist."
-        return 1
     fi
-
-    git switch "$base_branch"
-    git merge "$feature_branch"
-    echo " Merged '$feature_branch' into '$base_branch'"
 }
 
 # Rename a branch
 rename_branch() {
     list_branches
-    read -p "✏️ Enter the current branch name to rename: " old_name
-    validator "$old_name" " Please provide the current branch name." || return 1
+    read -p "✏️  Enter current branch name: " old
+    validator "$old" " Current name required." || return 1
 
-    read -p " Enter the new name: " new_name
-    validator "$new_name" " Please provide a new name." || return 1
+    read -p "➡️  Enter new branch name: " new
+    validator "$new" " New name required." || return 1
 
-    if git rev-parse --verify "$old_name" >/dev/null 2>&1; then
-        git branch -m "$old_name" "$new_name"
-        echo " Branch '$old_name' renamed to '$new_name'"
+    if git rev-parse --verify "$old" >/dev/null 2>&1; then
+        git branch -m "$old" "$new"
+        echo " Renamed '$old' to '$new'"
     else
-        echo " Branch '$old_name' does not exist."
-        return 1
+        echo " Branch '$old' does not exist."
     fi
 }
 
-# Get current branch and display
-current_branch=$(git branch --show-current)
-echo " You are currently on branch: $current_branch"
-echo
+# Main menu handler (for standalone use only)
+main_logs_menu() {
+    current_branch=$(git branch --show-current)
+    echo " You are currently on: $current_branch"
+    echo
+    echo " Branch Management Options:"
+    echo "1. Create a New Branch"
+    echo "2. Switch to an Existing Branch"
+    echo "3. List All Branches"
+    echo "4. Delete a Branch"
+    echo "5. Merge Branches"
+    echo "6. Rename a Branch"
+    echo "7. Exit"
+    echo
 
-# Show menu options
-echo "Branch Management Options:"
-echo "1. Create a New Branch"
-echo "2. Switch to an Existing Branch"
-echo "3. List All Branches"
-echo "4. Delete a Branch"
-echo "5. Merge Branches"
-echo "6. Rename a Branch"
-echo "7. Exit"
-echo
+    read -p " Enter your choice (1-7): " option
+    echo
 
-read -p " Enter your choice (1-7): " option
-echo
+    case "$option" in
+        1) create_branch ;;
+        2) switch_branch ;;
+        3) list_branches ;;
+        4) delete_branch ;;
+        5) merge_branches ;;
+        6) rename_branch ;;
+        7) echo " Exiting branch manager." && exit 0 ;;
+        *) echo " Invalid option. Choose between 1–7." ;;
+    esac
+}
 
-# Handle user choice
-case "$option" in
-    1) create_branch ;;
-    2) switch_branch ;;
-    3) list_branches ;;
-    4) delete_branch ;;
-    5) merge_branches ;;
-    6) rename_branch ;;
-    7)
-        echo " Exiting branch manager."
-        exit 0
-        ;;
-    *)
-        echo " Invalid option. Please choose between 1 and 7."
-        ;;
-esac
+# Run main menu if script is run directly
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main_logs_menu
+fi
 
