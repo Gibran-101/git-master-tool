@@ -1,6 +1,11 @@
 #!/bin/bash
 
-#  Validator to ensure input isn't empty
+# -------------------------
+# Revert & Reset Utility
+# Author: Gibran the Commit Slayer
+# -------------------------
+
+# Validator to ensure input isn't empty
 validator() {
     if [ -z "$1" ]; then
         echo "$2"
@@ -8,13 +13,13 @@ validator() {
     fi
 }
 
-#  Show recent commits in a friendly format
+# Show recent commits in a friendly format
 show_commits() {
     echo "Recent commits:"
     git log --oneline --graph --decorate --all -n 10
 }
 
-#  Reset to a specific commit
+# Reset to a specific commit
 reset_commit() {
     show_commits
     read -p "Enter commit hash to reset to: " commit_hash
@@ -29,17 +34,20 @@ reset_commit() {
     case "$reset_type" in
         1)
             git reset --soft "$commit_hash"
+            echo " Soft reset completed."
             ;;
         2)
             git reset --mixed "$commit_hash"
+            echo " Mixed reset completed."
             ;;
         3)
             read -p "Do you want to stash changes before hard reset? (yes/no): " stash_answer
             if [[ "$stash_answer" == "yes" ]]; then
                 git stash
-                echo "✔Changes stashed."
+                echo " Changes stashed."
             fi
             git reset --hard "$commit_hash"
+            echo " Hard reset completed. All local changes gone."
             ;;
         *)
             echo " Invalid reset option."
@@ -47,16 +55,20 @@ reset_commit() {
     esac
 }
 
-# ↩️ Revert a specific commit
+# Revert a specific commit
 revert_commit() {
     show_commits
     read -p "Enter the commit hash you want to revert: " revert_hash
     validator "$revert_hash" " Commit hash cannot be empty" || return 1
 
-    git revert "$revert_hash" || echo "⚠️ Revert may have failed due to merge conflicts. Resolve manually."
+    if git revert "$revert_hash"; then
+        echo " Commit successfully reverted."
+    else
+        echo " Revert may have failed due to conflicts. Resolve them manually."
+    fi
 }
 
-#  Undo the last commit
+# Undo the last commit
 undo_last_commit() {
     echo "Choose undo option:"
     echo "1. Undo last commit (keep changes)"
@@ -70,42 +82,44 @@ undo_last_commit() {
             ;;
         2)
             git reset --hard HEAD~1
-            echo "⚠️ Last commit and changes discarded."
+            echo " Last commit and changes discarded."
             ;;
         *)
-            echo " Invalid choice"
+            echo " Invalid choice."
             ;;
     esac
 }
 
-#  Main menu
-main_menu() {
-    while true; do
-        echo ""
-        echo "===== Git Revert & Reset Menu ====="
-        echo "1. Reset to specific commit"
-        echo "2. Revert a commit"
-        echo "3. Undo last commit"
-        echo "4. View recent commits"
-        echo "5. Exit"
-        read -p "Choose an option: " choice
+# =============================
+# Menu for Reset & Revert Ops
+# =============================
+main_revert_menu() {
+    echo ""
+    echo "Git Revert & Reset Menu"
+    echo "1. Reset to a Commit"
+    echo "2. Revert a Commit"
+    echo "3. Undo Last Commit"
+    echo "4. Exit"
+    echo ""
 
-        case "$choice" in
-            1) reset_commit ;;
-            2) revert_commit ;;
-            3) undo_last_commit ;;
-            4) show_commits ;;
-            5)
-                echo " Exiting revert_reset.sh. Stay safe."
-                break
-                ;;
-            *)
-                echo " Invalid option. Please try again."
-                ;;
-        esac
-    done
+    read -p "Choose an option (1-4): " user_choice
+
+    case "$user_choice" in
+        1) reset_commit ;;
+        2) revert_commit ;;
+        3) undo_last_commit ;;
+        4)
+            echo " Exiting revert/reset menu."
+            exit 0
+            ;;
+        *)
+            echo " Invalid option. Choose between 1-4."
+            ;;
+    esac
 }
 
-# 🚀 Launch the menu
-main_menu
+# Only execute if run directly, not sourced
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main_revert_menu
+fi
 
