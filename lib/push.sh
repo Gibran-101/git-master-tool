@@ -1,119 +1,127 @@
 #!/bin/bash
 
-# Helper function to check if a variable is empty
-checker(){
+# 💡 Validator to check if input is empty
+validate_input() {
     if [ -z "$1" ]; then
-        echo "$2"
+        echo " $2"
         return 1
     fi
 }
 
-# Validates and sets remote URL if it doesn't already exist
-url_validator(){
+# 🧠 Check if 'origin' already set
+ensure_remote_origin() {
     if git remote get-url origin >/dev/null 2>&1; then
         echo " Remote 'origin' already exists. Skipping add."
     else
         git remote add origin "$1"
+        echo " Remote 'origin' set to $1"
     fi
 }
 
-# Setup for a new repository
-new_repo() {
-    echo " Initializing new repo..."
+# 🚀 Setup for brand new repo
+init_new_repo() {
+    echo "🛠️ Initializing a new Git repository..."
     git init
 
-    # Ask user which files to add
-    read -p " Enter the files to add (space-separated): " add_response
+    read -p " Enter the files to add (space-separated): " files_to_add
+    validate_input "$files_to_add" "Please provide files to add." || return 1
 
-    checker "$add_response" " Please add files first" 
-
-    # Check if provided files actually exist
-    for file in $add_response; do
+    for file in $files_to_add; do
         if [ ! -e "$file" ]; then
             echo " File '$file' does not exist."
             return 1
         fi
     done
 
-    git add $add_response
+    git add $files_to_add
 
-    # Ask for commit message
-    read -p " Enter the first commit message: " commit_msg
-    checker "$commit_msg" " Empty commit message not allowed." 
-
+    read -p " Enter commit message: " commit_msg
+    validate_input "$commit_msg" "Commit message can't be empty." || return 1
     git commit -m "$commit_msg"
 
-    # Set main as the default branch
     git branch -M main
 
-    # Ask user for preferred URL format
-    read -p " Choose URL format (https/ssh): " url_choice
-
-    if [[ "$url_choice" == "https" || "$url_choice" == "ssh" ]]; then
-        read -p " Enter the repo URL: " url
-        url_validator "$url"
-    else
-        echo " Invalid URL format. Choose 'https' or 'ssh'."
+    read -p " Choose URL format (https/ssh): " url_format
+    if [[ "$url_format" != "https" && "$url_format" != "ssh" ]]; then
+        echo " Invalid URL format. Use 'https' or 'ssh'."
         return 1
     fi
 
-    # SSH Fix: Use SSH Agent if needed
-    if [[ "$url_choice" == "ssh" ]]; then
+    read -p " Enter the remote repo URL: " repo_url
+    validate_input "$repo_url" "Remote URL can't be empty." || return 1
+    ensure_remote_origin "$repo_url"
+
+    if [[ "$url_format" == "ssh" ]]; then
         eval "$(ssh-agent -s)" >/dev/null
-        ssh-add ~/.ssh/id_rsa 2>/dev/null || echo "⚠️ Could not add SSH key. Make sure it exists."
+        read -p " Enter SSH private key path (default: ~/.ssh/id_rsa): " ssh_key
+        ssh_key=${ssh_key:-~/.ssh/id_rsa}
+        ssh-add "$ssh_key" 2>/dev/null || echo "⚠️ Failed to add SSH key. Make sure the path is correct."
     fi
 
-    # Attempt to push
-    if ! git push -u origin main; then
-        echo " Push failed. Check your URL or authentication."
+    git push -u origin main || {
+        echo " Push failed. Check URL or authentication."
         return 1
-    fi
+    }
 
-    echo " Repo pushed successfully!"
+    echo " Repository initialized and pushed successfully!"
 }
 
-# Workflow for an existing repo
-existing_repo() {
-    echo "Choose how to add files:"
+# 🧑‍ Commit and push for existing repo
+push_existing_repo() {
+    echo " Choose how to add files:"
     echo "1. Add all (git add .)"
-    echo "2. Add updated/tracked only (git add -u)"
+    echo "2. Add only tracked changes (git add -u)"
     echo "3. Add specific files"
-    read -p " Enter your choice (1/2/3): " add_choice
+    read -p "Your choice (1/2/3): " add_mode
 
-    case "$add_choice" in
+    case "$add_mode" in
         1) git add . ;;
         2) git add -u ;;
         3)
-            read -p " Enter file names separated by space: " file_list
+            read -p "Enter filenames (space-separated): " file_list
+            validate_input "$file_list" "Please provide files to add." || return 1
             git add $file_list
             ;;
-        *) echo " Invalid choice. No files added."; return 1 ;;
+        *)
+            echo " Invalid choice. Aborting."
+            return 1
+            ;;
     esac
 
     read -p " Enter commit message: " commit_msg
-    checker "$commit_msg" " Empty commit message not allowed" 
-
+    validate_input "$commit_msg" "Commit message can't be empty." || return 1
     git commit -m "$commit_msg"
 
     current_branch=$(git branch --show-current)
-    echo " Pushing to origin/$current_branch..."
-    git push origin "$current_branch"
+    git push origin "$current_branch" || {
+        echo " Push failed. Check branch or remote."
+        return 1
+    }
+
+    echo " Changes pushed to branch '$current_branch'."
 }
 
-# Entrypoint prompt
-read -p " Enter '1' to create a new repo, '0' to use an existing one: " choice
+# 🔁 Entrypoint
+main() {
+    read -p " Enter '1' to create a new repo, '0' to use an existing one: " user_choice
 
-if [ "$choice" = "1" ]; then
-    new_repo
-elif [ "$choice" = "0" ]; then
-    existing_repo
-else
-    echo " Invalid entry. Use 1 or 0."
-fi
+    if [[ "$user_choice" == "1" ]]; then
+        init_new_repo
+    elif [[ "$user_choice" == "0" ]]; then
+        push_existing_repo
+    else
+        echo " Invalid input. Please enter 1 or 0."
+        return 1
+    fi
 
-if [ $? -eq 0 ]; then
-    echo " Push successful."
-else
-    echo " Push failed. Fix your conflicts or remote issues."
-fi
+    # Final success/failure message
+    if [ $? -eq 0 ]; then
+        echo " Push operation completed successfully."
+    else
+        echo " Push operation failed. Check the above messages."
+    fi
+}
+
+# 🚨 Script starts here
+main
 
