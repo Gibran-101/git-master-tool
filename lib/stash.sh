@@ -88,4 +88,3 @@ main_stash_menu() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     main_stash_menu
 fi
-
