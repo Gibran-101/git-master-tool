@@ -89,7 +89,7 @@ export_logs() {
 }
 
 # Menu for selecting log operations
-main_menu() {
+main_logs_menu() {
     echo ""
     echo " Git Logging Operations Menu"
     echo "1. Detailed Log"
@@ -122,7 +122,7 @@ main_menu() {
 
 # Run the menu only if this script is executed directly
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    main_menu
+    main_logs_menu
 fi
 
 
