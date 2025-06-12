@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# ─────────────────────────────────────────────────────
+# Git Logs Utility Script
+# Author: Gibran "Lord of Branches"
+# ─────────────────────────────────────────────────────
+
 # Validate that input is not empty
 validator() {
     if [ -z "$1" ]; then
@@ -28,15 +33,15 @@ graph_view_logs() {
 
 # 4. Filter logs by author
 logs_by_author() {
-    read -p " Please enter the author name: " author_name
-    validator "$author_name" " Please enter the author name" || return 1
+    read -p " Enter the author name: " author_name
+    validator "$author_name" " Author name cannot be empty." || return 1
     git log --author="$author_name"
 }
 
 # 5. View last N commits
 access_last_N_commits() {
-    read -p " Please enter how many recent commits to show: " counter
-    validator "$counter" " Please enter a number" || return 1
+    read -p " Enter how many recent commits to show: " counter
+    validator "$counter" " Please enter a number." || return 1
 
     if ! [[ "$counter" =~ ^[0-9]+$ ]]; then
         echo " Invalid number entered."
@@ -50,22 +55,22 @@ access_last_N_commits() {
 export_logs() {
     read -p " Would you like to export your logs? (yes/no): " user_response
     user_response=$(echo "$user_response" | tr '[:upper:]' '[:lower:]')
-    validator "$user_response" " Please enter a response" || return 1
+    validator "$user_response" " Please enter a response." || return 1
 
     if [ "$user_response" = "yes" ]; then
         read -p " Select log type (basic/oneline/graph): " log_type
         log_type=$(echo "$log_type" | tr '[:upper:]' '[:lower:]')
 
         read -p " Enter filename (without extension): " filename
-        validator "$log_type" " Please select a log type" || return 1
-        validator "$filename" " Please enter a filename" || return 1
+        validator "$log_type" " Please select a log type." || return 1
+        validator "$filename" " Please enter a filename." || return 1
 
         case "$log_type" in
             "basic") git log > "$filename.txt" ;;
             "oneline") git log --oneline > "$filename.txt" ;;
             "graph") git log --graph --oneline --decorate --all > "$filename.txt" ;;
             *)
-                echo " Invalid log type selected. Choose: basic / oneline / graph"
+                echo " Invalid log type. Choose: basic / oneline / graph"
                 return 1
                 ;;
         esac
@@ -75,10 +80,11 @@ export_logs() {
         else
             echo " Failed to export logs."
         fi
+
     elif [ "$user_response" = "no" ]; then
         echo " Export cancelled."
     else
-        echo "⚠️ Invalid response. Please type yes or no."
+        echo " Invalid response. Please type yes or no."
     fi
 }
 
@@ -114,6 +120,9 @@ main_menu() {
     esac
 }
 
-# Kick off the script
-main_menu
+# Run the menu only if this script is executed directly
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    main_menu
+fi
+
 
