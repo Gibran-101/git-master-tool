@@ -2,8 +2,10 @@
 
 # ─────────────────────────────────────────────────────
 # Git Clone Utility
-# Author: Gibran (aka "The Git Whisperer")
+# Author: Gibran
 # ─────────────────────────────────────────────────────
+
+source ./common_utils.sh
 
 # Run SSH setup if needed
 setup_ssh_agent() {
@@ -24,18 +26,14 @@ setup_ssh_agent() {
 
 # Perform the clone
 clone_repo() {
-    read -p " Choose URL format (https/ssh): " url_choice
+    url_choice=$(prompt_with_validation "Choose URL format (https/ ssh): ") || return 1
 
     if [[ "$url_choice" != "https" && "$url_choice" != "ssh" ]]; then
         echo " Invalid format. Choose either 'https' or 'ssh'."
         return 1
     fi
 
-    read -p " Enter the Git repository URL to clone: " url
-    if [[ -z "$url" ]]; then
-        echo " Repository URL cannot be empty."
-        return 1
-    fi
+    url=$(prompt_with_validation "Enter the Git repository URL to clone: ") || return 1
 
     if [[ "$url_choice" == "ssh" ]]; then
         setup_ssh_agent || return 1
