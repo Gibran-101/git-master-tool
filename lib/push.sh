@@ -20,9 +20,10 @@ ensure_remote_origin() {
 
 # 🚀 Setup for brand new repo
 init_new_repo() {
-    echo "🛠️ Initializing a new Git repository..."
+    echo " Initializing a new Git repository..."
     git init
 
+    git status
     read -p " Enter the files to add (space-separated): " files_to_add
     validate_input "$files_to_add" "Please provide files to add." || return 1
 
@@ -78,7 +79,8 @@ push_existing_repo() {
         1) git add . ;;
         2) git add -u ;;
         3)
-            read -p "Enter filenames (space-separated): " file_list
+            git status
+	    read -p "Enter filenames (space-separated): " file_list
             validate_input "$file_list" "Please provide files to add." || return 1
             git add $file_list
             ;;
