@@ -2,7 +2,7 @@
 
 # -------------------------
 # Revert & Reset Utility
-# Author: Gibran the Commit Slayer
+# Author: Gibran 
 # -------------------------
 
 # Validator to ensure input isn't empty
@@ -42,10 +42,8 @@ reset_commit() {
             ;;
         3)
             read -p "Do you want to stash changes before hard reset? (yes/no): " stash_answer
-            if [[ "$stash_answer" == "yes" ]]; then
-                git stash
-                echo " Changes stashed."
-            fi
+          
+	    [[ "$stash_answer" == "yes" ]] && git stash && echo "Changes stashed SUCCESSFULLY"
             git reset --hard "$commit_hash"
             echo " Hard reset completed. All local changes gone."
             ;;
