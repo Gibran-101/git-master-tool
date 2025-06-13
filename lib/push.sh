@@ -42,8 +42,10 @@ init_new_repo() {
     if [[ "$branch_response" =~ ^[Yy]$ ]]; then
     read -p "Enter your desired branch name: " new_branch
     new_branch=$(prompt_with_validation "Branch name cannot be empty! ") || return 1
+    	branch_name=$new_branch
     	git branch -M "$new_branch"
     else
+	branch_name="master"
     	git branch -M master
     fi
 
@@ -65,7 +67,7 @@ init_new_repo() {
         ssh-add "$ssh_key" 2>/dev/null || echo "⚠️ Failed to add SSH key. Make sure the path is correct."
     fi
 
-    git push -u origin main || {
+    git push -u origin $branch_name || {
         echo " Push failed. Check URL or authentication."
         return 1
     }
