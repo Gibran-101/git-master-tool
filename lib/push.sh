@@ -1,12 +1,6 @@
 #!/bin/bash
 
-# 💡 Validator to check if input is empty
-validate_input() {
-    if [ -z "$1" ]; then
-        echo " $2"
-        return 1
-    fi
-}
+source ./common_utils.sh
 
 # 🧠 Check if 'origin' already set
 ensure_remote_origin() {
@@ -25,7 +19,8 @@ init_new_repo() {
 
     git status
     read -p " Enter the files to add (space-separated): " files_to_add
-    validate_input "$files_to_add" "Please provide files to add." || return 1
+
+    files_to_add=$(prompt_with_validation "Please provide files to add. ") || return 1
 
     for file in $files_to_add; do
         if [ ! -e "$file" ]; then
@@ -37,15 +32,16 @@ init_new_repo() {
     git add $files_to_add
 
     read -p " Enter commit message: " commit_msg
-    validate_input "$commit_msg" "Commit message can't be empty." || return 1
+   
+    commit_msg=$(prompt_with_validation "Commit message can't be empty: ") || return 1
     git commit -m "$commit_msg"
 
     read -p "The default branch name is 'master'. Do you want to change it? (y/n): " branch_response
-    validate_input "$branch_response" "Please enter a response."
+    branch_response=$(prompt_with_validation "Please enter a response ") || return 1
 
     if [[ "$branch_response" =~ ^[Yy]$ ]]; then
     read -p "Enter your desired branch name: " new_branch
-    validate_input "$new_branch" "Branch name cannot be empty!"
+    new_branch=$(prompt_with_validation "Branch name cannot be empty! ") || return 1
     	git branch -M "$new_branch"
     else
     	git branch -M master
@@ -58,7 +54,8 @@ init_new_repo() {
     fi
 
     read -p " Enter the remote repo URL: " repo_url
-    validate_input "$repo_url" "Remote URL can't be empty." || return 1
+    repo_url=$(prompt_with_validation "Remote URL cannot be empty ") || return 1
+   
     ensure_remote_origin "$repo_url"
 
     if [[ "$url_format" == "ssh" ]]; then
@@ -90,7 +87,7 @@ push_existing_repo() {
         3)
             git status
 	    read -p "Enter filenames (space-separated): " file_list
-            validate_input "$file_list" "Please provide files to add." || return 1
+	    file_list=$(prompt_with_validation "Please provide files to add. ") || return 1
             git add $file_list
             ;;
         *)
@@ -100,7 +97,7 @@ push_existing_repo() {
     esac
 
     read -p " Enter commit message: " commit_msg
-    validate_input "$commit_msg" "Commit message can't be empty." || return 1
+    commit_msg=$(prompt_with_validation "Commit message cannot be empty ") || return 1
     git commit -m "$commit_msg"
 
     current_branch=$(git branch --show-current)
