@@ -5,13 +5,8 @@
 # Author: Gibran 
 # -------------------------
 
-# Validator to ensure input isn't empty
-validator() {
-    if [ -z "$1" ]; then
-        echo "$2"
-        return 1
-    fi
-}
+# Input Validator
+source ./common_utils.sh
 
 # Show recent commits in a friendly format
 show_commits() {
@@ -22,14 +17,15 @@ show_commits() {
 # Reset to a specific commit
 reset_commit() {
     show_commits
-    read -p "Enter commit hash to reset to: " commit_hash
-    validator "$commit_hash" " Commit hash cannot be empty" || return 1
+
+    commit_hash=$(prompt_with_validation "Please enter commit hash to reset ") || return 1
 
     echo "Choose reset type:"
     echo "1. Soft Reset (keep changes)"
     echo "2. Mixed Reset (reset index, keep working directory)"
     echo "3. Hard Reset (dangerous: wipe all local changes)"
-    read -p "Your choice: " reset_type
+   
+    reset_type=$(prompt_with_validation "Please enter your choice: ") || return 1
 
     case "$reset_type" in
         1)
@@ -41,9 +37,9 @@ reset_commit() {
             echo " Mixed reset completed."
             ;;
         3)
-            read -p "Do you want to stash changes before hard reset? (yes/no): " stash_answer
+	    stash_answer=$(prompt_with_validation "Do you want to stash changes before hard reset? (y/ n) ") || return 1
           
-	    [[ "$stash_answer" == "yes" ]] && git stash && echo "Changes stashed SUCCESSFULLY"
+	    [[ "$stash_answer" == "y" ]] && git stash && echo "Changes stashed SUCCESSFULLY"
             git reset --hard "$commit_hash"
             echo " Hard reset completed. All local changes gone."
             ;;
@@ -56,8 +52,7 @@ reset_commit() {
 # Revert a specific commit
 revert_commit() {
     show_commits
-    read -p "Enter the commit hash you want to revert: " revert_hash
-    validator "$revert_hash" " Commit hash cannot be empty" || return 1
+    revert_hash=$(prompt_with_validation "Please enter commit hash to revert ") || return 1
 
     if git revert "$revert_hash"; then
         echo " Commit successfully reverted."
@@ -71,7 +66,8 @@ undo_last_commit() {
     echo "Choose undo option:"
     echo "1. Undo last commit (keep changes)"
     echo "2. Undo last commit (discard changes)"
-    read -p "Your choice: " undo_choice
+   
+    undo_choice=$(prompt_with_validation "Please enter your choice: ") || return 1
 
     case "$undo_choice" in
         1)
@@ -100,7 +96,7 @@ main_revert_menu() {
     echo "4. Exit"
     echo ""
 
-    read -p "Choose an option (1-4): " user_choice
+    user_choice=$(prompt_with_validation "Please choose an option (1-4) ") || return 1
 
     case "$user_choice" in
         1) reset_commit ;;
