@@ -40,7 +40,16 @@ init_new_repo() {
     validate_input "$commit_msg" "Commit message can't be empty." || return 1
     git commit -m "$commit_msg"
 
-    git branch -M main
+    read -p "The default branch name is 'master'. Do you want to change it? (y/n): " branch_response
+    validate_input "$branch_response" "Please enter a response."
+
+    if [[ "$branch_response" =~ ^[Yy]$ ]]; then
+    read -p "Enter your desired branch name: " new_branch
+    validate_input "$new_branch" "Branch name cannot be empty!"
+    	git branch -M "$new_branch"
+    else
+    	git branch -M master
+    fi
 
     read -p " Choose URL format (https/ssh): " url_format
     if [[ "$url_format" != "https" && "$url_format" != "ssh" ]]; then
