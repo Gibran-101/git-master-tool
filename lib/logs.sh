@@ -2,16 +2,11 @@
 
 # ─────────────────────────────────────────────────────
 # Git Logs Utility Script
-# Author: Gibran "Lord of Branches"
+# Author: Gibran
 # ─────────────────────────────────────────────────────
 
 # Validate that input is not empty
-validator() {
-    if [ -z "$1" ]; then
-        echo "$2"
-        return 1
-    fi
-}
+source ./common_utils.sh
 
 # 1. Detailed git log
 basic_log() {
@@ -33,15 +28,13 @@ graph_view_logs() {
 
 # 4. Filter logs by author
 logs_by_author() {
-    read -p " Enter the author name: " author_name
-    validator "$author_name" " Author name cannot be empty." || return 1
+    author_name=$(prompt_with_validation "Enter the author name ") || return 1
     git log --author="$author_name"
 }
 
 # 5. View last N commits
 access_last_N_commits() {
-    read -p " Enter how many recent commits to show: " counter
-    validator "$counter" " Please enter a number." || return 1
+    counter=$(prompt_with_validation "Please enter N value, to access recent commits ") || return 1
 
     if ! [[ "$counter" =~ ^[0-9]+$ ]]; then
         echo " Invalid number entered."
@@ -53,17 +46,12 @@ access_last_N_commits() {
 
 # 6. Export logs to a file
 export_logs() {
-    read -p " Would you like to export your logs? (yes/no): " user_response
-    user_response=$(echo "$user_response" | tr '[:upper:]' '[:lower:]')
-    validator "$user_response" " Please enter a response." || return 1
+    user_response=$(prompt_with_validation "Would you like to export logs (y/ n) ") || return 1
 
-    if [ "$user_response" = "yes" ]; then
-        read -p " Select log type (basic/oneline/graph): " log_type
-        log_type=$(echo "$log_type" | tr '[:upper:]' '[:lower:]')
+    if [ "$user_response" = "y" ]; then
+	log_type=$(prompt_with_validation "Select log type (basic/ oneline/ graph) ") || return 1
 
-        read -p " Enter filename (without extension): " filename
-        validator "$log_type" " Please select a log type." || return 1
-        validator "$filename" " Please enter a filename." || return 1
+	filename=$(prompt_with_validation "Please enter filename (without extension) ") || return 1
 
         case "$log_type" in
             "basic") git log > "$filename.txt" ;;
@@ -101,7 +89,7 @@ main_logs_menu() {
     echo "7. Exit"
     echo ""
 
-    read -p " Select an option (1-7): " selected_option
+    selected_option=$(prompt_with_validation "Please select an option (1-7) ") || return 1
 
     case "$selected_option" in
         1) basic_log ;;
