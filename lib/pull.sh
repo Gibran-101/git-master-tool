@@ -19,12 +19,14 @@ if ! git rev-parse --git-dir > /dev/null 2>&1; then
     exit 1
 fi
 
-# Prompt for remote and branch
-read -p "Enter remote name (default: origin): " remote
-remote="${remote:-origin}"
+# Remote  and Branch input
+read -p " Enter remote name (default: origin): " remote
+remote=${remote:-origin}
+echo "➡️  Using remote: $remote"
 
-read -p "Enter branch name (default: current branch): " branch
-branch="${branch:-$(git branch --show-current)}"
+read -p " Enter branch name (default: current branch): " branch
+branch=${branch:-$(git branch --show-current)}
+echo "➡️  Using branch: $branch"
 
 # Pull strategy selection
 choose_strategy() {
