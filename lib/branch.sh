@@ -5,12 +5,7 @@
 # ─────────────────────────────────────────────────────
 
 # Helper: Validate non-empty input
-validator() {
-    if [ -z "$1" ]; then
-        echo "$2"
-        return 1
-    fi
-}
+source ./common_utils.sh
 
 # List all local branches
 list_branches() {
@@ -21,8 +16,7 @@ list_branches() {
 # Switch to a branch
 switch_branch() {
     list_branches
-    read -p " Enter the branch you want to switch to: " branch_name
-    validator "$branch_name" " Please provide a branch name." || return 1
+    branch_name=$(prompt_with_validation "Enter the branch name to be switched: ") || return 1
 
     if git rev-parse --verify "$branch_name" >/dev/null 2>&1; then
         git switch "$branch_name"
@@ -34,8 +28,7 @@ switch_branch() {
 
 # Create a new branch and optionally switch to it
 create_branch() {
-    read -p " Enter the new branch name: " new_branch
-    validator "$new_branch" " Branch name can't be empty." || return 1
+    new_branch=$(prompt_with_validation "Enter the new branch name ") || return 1
 
     git checkout -b "$new_branch"
     echo " Created branch '$new_branch'"
@@ -47,8 +40,7 @@ create_branch() {
 # Delete a branch
 delete_branch() {
     list_branches
-    read -p " Enter the branch name to delete: " branch_to_delete
-    validator "$branch_to_delete" " Please provide a branch name." || return 1
+    branch_to_delete=$(prompt_with_validation "Ente the branch name to be deleted ") || return 1
 
     if git rev-parse --verify "$branch_to_delete" >/dev/null 2>&1; then
         read -p "⚠️  Confirm deletion of '$branch_to_delete'? (yes): " confirm
@@ -61,11 +53,9 @@ delete_branch() {
 # Merge feature branch into base branch
 merge_branches() {
     list_branches
-    read -p " Enter the base branch (merge INTO): " base
-    read -p " Enter the feature branch (merge FROM): " feature
 
-    validator "$base" " Base branch is required." || return 1
-    validator "$feature" " Feature branch is required." || return 1
+    base=$(prompt_with_validation "Please enter the base branch name (merge INTO) ") || return 1
+    feature=$(prompt_with_validation "Please enter the feature branch name (merge FROM) ") || return 1
 
     if [[ "$base" == "$feature" ]]; then
         echo " Base and feature branches cannot be the same."
@@ -84,11 +74,10 @@ merge_branches() {
 # Rename a branch
 rename_branch() {
     list_branches
-    read -p "✏️  Enter current name of the branch to be renamed: " old_named
-    validator "$old_name" " Current name required." || return 1
 
-    read -p "➡️  Enter new name for the existing branch: " new_name
-    validator "$new_name" " New name required." || return 1
+    old_name=$(prompt_with_validation "Please enter the name of the branch to be renamed ") || return 1
+
+    new_name=$(prompt_with_validation "Please enter the new name for the exisiting branch ") || return 1
 
     if git rev-parse --verify "$old_name" >/dev/null 2>&1; then
         git branch -m "$old_name" "$new_name"
@@ -113,8 +102,7 @@ main_logs_menu() {
     echo "7. Exit"
     echo
 
-    read -p " Enter your choice (1-7): " option
-    echo
+    option=$(prompt_with_validation "Please select a option (1 - 7) ") || return 1
 
     case "$option" in
         1) create_branch ;;
