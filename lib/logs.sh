@@ -29,7 +29,14 @@ graph_view_logs() {
 # 4. Filter logs by author
 logs_by_author() {
     author_name=$(prompt_with_validation "Enter the author name ") || return 1
-    git log --author="$author_name"
+    
+    # Check if author has any commits
+    if git log --author="$author_name" --oneline | grep -q .; then
+        git log --author="$author_name"
+    else
+        echo " Author '$author_name' not found in commit history."
+        return 1
+    fi
 }
 
 # 5. View last N commits
