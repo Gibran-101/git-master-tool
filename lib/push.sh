@@ -18,9 +18,8 @@ init_new_repo() {
     git init
 
     git status
-    read -p " Enter the files to add (space-separated): " files_to_add
 
-    files_to_add=$(prompt_with_validation "Please provide files to add. ") || return 1
+    files_to_add=$(prompt_with_validation "Enter the files to add (space-separated) ") || return 1
 
     for file in $files_to_add; do
         if [ ! -e "$file" ]; then
@@ -30,18 +29,14 @@ init_new_repo() {
     done
 
     git add $files_to_add
-
-    read -p " Enter commit message: " commit_msg
    
-    commit_msg=$(prompt_with_validation "Commit message can't be empty: ") || return 1
+    commit_msg=$(prompt_with_validation "Enter commit message: ") || return 1
     git commit -m "$commit_msg"
 
-    read -p "The default branch name is 'master'. Do you want to change it? (y/n): " branch_response
-    branch_response=$(prompt_with_validation "Please enter a response ") || return 1
+    branch_response=$(prompt_with_validation "The default branch name is 'master'. Do you want to change it (y/ n): ") || return 1
 
     if [[ "$branch_response" =~ ^[Yy]$ ]]; then
-    read -p "Enter your desired branch name: " new_branch
-    new_branch=$(prompt_with_validation "Branch name cannot be empty! ") || return 1
+    new_branch=$(prompt_with_validation "Enter desired branch name: ") || return 1
     	branch_name=$new_branch
     	git branch -M "$new_branch"
     else
@@ -55,8 +50,7 @@ init_new_repo() {
         return 1
     fi
 
-    read -p " Enter the remote repo URL: " repo_url
-    repo_url=$(prompt_with_validation "Remote URL cannot be empty ") || return 1
+    repo_url=$(prompt_with_validation "Enter the remote repo URL: ") || return 1
    
     ensure_remote_origin "$repo_url"
 
@@ -88,8 +82,7 @@ push_existing_repo() {
         2) git add -u ;;
         3)
             git status
-	    read -p "Enter filenames (space-separated): " file_list
-	    file_list=$(prompt_with_validation "Please provide files to add. ") || return 1
+	    file_list=$(prompt_with_validation "Enter filenames (space-separated): ") || return 1
             git add $file_list
             ;;
         *)
@@ -98,8 +91,7 @@ push_existing_repo() {
             ;;
     esac
 
-    read -p " Enter commit message: " commit_msg
-    commit_msg=$(prompt_with_validation "Commit message cannot be empty ") || return 1
+    commit_msg=$(prompt_with_validation "Enter commit message: ") || return 1
     git commit -m "$commit_msg"
 
     current_branch=$(git branch --show-current)
