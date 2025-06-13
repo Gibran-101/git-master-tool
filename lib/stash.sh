@@ -1,12 +1,7 @@
 #!/bin/bash
 
 # Validate input
-validator() {
-    if [ -z "$1" ]; then
-        echo " $2"
-        return 1
-    fi
-}
+source ./common_utils.sh
 
 # Save current changes to a stash
 create_stash() {
@@ -28,8 +23,8 @@ list_stashes() {
 # Apply a stash
 apply_stash() {
     list_stashes
-    read -p " Enter stash identifier to apply (e.g., stash@{0}): " stash_id
-    validator "$stash_id" " Stash ID cannot be empty." || return 1
+    
+    stash_id=$(prompt_with_validation "Please enter stash identifier to apply (eg., stash@{0} ") || return 1
     git stash apply "$stash_id"
     echo " Stash $stash_id applied."
 }
@@ -37,16 +32,16 @@ apply_stash() {
 # Drop a specific stash
 drop_stash() {
     list_stashes
-    read -p " Enter stash identifier to drop (e.g., stash@{0}): " stash_id
-    validator "$stash_id" " Stash ID cannot be empty." || return 1
+    stash_id=$(prompt_with_validation "Please enter stash identifier to drop (eg., stash@{0} ") || return 1
     git stash drop "$stash_id"
     echo " Stash $stash_id dropped."
 }
 
 # Clear all stashes
 clear_stashes() {
-    read -p " Are you sure you want to clear all stashes? (yes/no): " confirm
-    if [[ "$confirm" == "yes" ]]; then
+    
+    confirm=$(prompt_with_validation "Are you sure you want to clear all stashes (y/ n): ") || return 1
+    if [[ "$confirm" == "y" ]]; then
         git stash clear
         echo " All stashes nuked."
     else
@@ -66,7 +61,7 @@ main_stash_menu() {
     echo "6. Exit"
     echo ""
 
-    read -p " Choose an option (1-6): " option
+    option=$(prompt_with_validation "Choose an option (1-6): ") || return 1
 
     case "$option" in
         1) create_stash ;;
