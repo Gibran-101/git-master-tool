@@ -5,13 +5,7 @@
 # Author: Gibran (and the sassiest GPT alive)
 # ============================
 
-# Validate input
-validator() {
-    if [ -z "$1" ]; then
-        echo "$2"
-        return 1
-    fi
-}
+source ./common_utils.sh
 
 # Ensure we're inside a git repo
 if ! git rev-parse --git-dir > /dev/null 2>&1; then
@@ -36,7 +30,7 @@ choose_strategy() {
     echo "2. Rebase"
     echo "3. Fast-forward only"
     echo "4. Allow unrelated histories"
-    read -p "Your choice: " choice
+    choice=$(prompt_with_validation "Your choice: ") || return 1
 
     local flag=""
     case "$choice" in
