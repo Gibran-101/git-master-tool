@@ -84,24 +84,24 @@ merge_branches() {
 # Rename a branch
 rename_branch() {
     list_branches
-    read -p "✏️  Enter current branch name: " old
-    validator "$old" " Current name required." || return 1
+    read -p "✏️  Enter current name of the branch to be renamed: " old_named
+    validator "$old_name" " Current name required." || return 1
 
-    read -p "➡️  Enter new branch name: " new
-    validator "$new" " New name required." || return 1
+    read -p "➡️  Enter new name for the existing branch: " new_name
+    validator "$new_name" " New name required." || return 1
 
-    if git rev-parse --verify "$old" >/dev/null 2>&1; then
-        git branch -m "$old" "$new"
-        echo " Renamed '$old' to '$new'"
+    if git rev-parse --verify "$old_name" >/dev/null 2>&1; then
+        git branch -m "$old_name" "$new_name"
+        echo " Renamed '$old_name' to '$new_name'"
     else
-        echo " Branch '$old' does not exist."
+        echo " Branch '$old_name' does not exist."
     fi
 }
 
 # Main menu handler (for standalone use only)
 main_logs_menu() {
     current_branch=$(git branch --show-current)
-    echo " You are currently on: $current_branch"
+    echo " You are currently on: $current_branch branch"
     echo
     echo " Branch Management Options:"
     echo "1. Create a New Branch"
