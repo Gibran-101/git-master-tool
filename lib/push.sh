@@ -1,119 +1,161 @@
 #!/bin/bash
 
-# Helper function to check if a variable is empty
-checker(){
-    if [ -z "$1" ]; then
-        echo "$2"
-        return 1
-    fi
-}
+source ./logger.sh
+source ./common_utils.sh
 
-# Validates and sets remote URL if it doesn't already exist
-url_validator(){
+# 🧠 Check if 'origin' already set
+ensure_remote_origin() {
     if git remote get-url origin >/dev/null 2>&1; then
+        log_json "INFO" "$(basename "$0")" "Remote 'origin' already exists. Skipping add."
         echo " Remote 'origin' already exists. Skipping add."
     else
         git remote add origin "$1"
+        echo " Remote 'origin' set to $1"
+        log_json "INFO" "$(basename "$0")" "Remote 'origin' set to $1"
     fi
 }
 
-# Setup for a new repository
-new_repo() {
-    echo " Initializing new repo..."
+# 🚀 Setup for brand new repo
+init_new_repo() {
+    log_json "INFO" "$(basename "$0")" "Initializing new Git repo..."
+    echo " Initializing a new Git repository..."
     git init
 
-    # Ask user which files to add
-    read -p " Enter the files to add (space-separated): " add_response
+    git status
 
-    checker "$add_response" " Please add files first" 
+    files_to_add=$(prompt_with_validation "Enter the files to add (space-separated) ") || {
+        log_json "ERROR" "$(basename "$0")" "File prompt failed"
+        return 1
+    }
 
-    # Check if provided files actually exist
-    for file in $add_response; do
+    for file in $files_to_add; do
         if [ ! -e "$file" ]; then
             echo " File '$file' does not exist."
+            log_json "ERROR" "$(basename "$0")" "File '$file' does not exist"
             return 1
         fi
     done
 
-    git add $add_response
+    git add $files_to_add
 
-    # Ask for commit message
-    read -p " Enter the first commit message: " commit_msg
-    checker "$commit_msg" " Empty commit message not allowed." 
-
+    commit_msg=$(prompt_with_validation "Enter commit message: ") || {
+        log_json "ERROR" "$(basename "$0")" "Commit message prompt failed"
+        return 1
+    }
     git commit -m "$commit_msg"
+    log_json "INFO" "$(basename "$0")" "Committed changes"
 
-    # Set main as the default branch
-    git branch -M main
-
-    # Ask user for preferred URL format
-    read -p " Choose URL format (https/ssh): " url_choice
-
-    if [[ "$url_choice" == "https" || "$url_choice" == "ssh" ]]; then
-        read -p " Enter the repo URL: " url
-        url_validator "$url"
+    branch_response=$(prompt_with_validation "The default branch name is 'master'. Do you want to change it (y/ n): ") || return 1
+    if [[ "$branch_response" =~ ^[Yy]$ ]]; then
+        new_branch=$(prompt_with_validation "Enter desired branch name: ") || return 1
+        branch_name=$new_branch
+        git branch -M "$new_branch"
+        log_json "INFO" "$(basename "$0")" "Branch renamed to $new_branch"
     else
-        echo " Invalid URL format. Choose 'https' or 'ssh'."
+        branch_name="master"
+        git branch -M master
+        log_json "INFO" "$(basename "$0")" "Branch name set to default 'master'"
+    fi
+
+    read -p " Choose URL format (https/ssh): " url_format
+    if [[ "$url_format" != "https" && "$url_format" != "ssh" ]]; then
+        echo " Invalid URL format. Use 'https' or 'ssh'."
+        log_json "ERROR" "$(basename "$0")" "Invalid URL format: $url_format"
         return 1
     fi
 
-    # SSH Fix: Use SSH Agent if needed
-    if [[ "$url_choice" == "ssh" ]]; then
+    repo_url=$(prompt_with_validation "Enter the remote repo URL: ") || {
+        log_json "ERROR" "$(basename "$0")" "Repo URL prompt failed"
+        return 1
+    }
+
+    ensure_remote_origin "$repo_url"
+
+    if [[ "$url_format" == "ssh" ]]; then
         eval "$(ssh-agent -s)" >/dev/null
-        ssh-add ~/.ssh/id_rsa 2>/dev/null || echo "⚠️ Could not add SSH key. Make sure it exists."
+        read -p " Enter SSH private key path (default: ~/.ssh/id_rsa): " ssh_key
+        ssh_key=${ssh_key:-~/.ssh/id_rsa}
+        ssh-add "$ssh_key" 2>/dev/null || {
+            echo "  Failed to add SSH key. Make sure the path is correct."
+            log_json "ERROR" "$(basename "$0")" "SSH key add failed at $ssh_key"
+        }
     fi
 
-    # Attempt to push
-    if ! git push -u origin main; then
-        echo " Push failed. Check your URL or authentication."
+    git push -u origin $branch_name || {
+        echo " Push failed. Check URL or authentication."
+        log_json "ERROR" "$(basename "$0")" "Push failed to origin/$branch_name"
         return 1
-    fi
+    }
 
-    echo " Repo pushed successfully!"
+    echo " Repository initialized and pushed successfully!"
+    log_json "SUCCESS" "$(basename "$0")" "Repo initialized and pushed to origin/$branch_name"
 }
 
-# Workflow for an existing repo
-existing_repo() {
-    echo "Choose how to add files:"
+# 🧑‍💻 Commit and push for existing repo
+push_existing_repo() {
+    log_json "INFO" "$(basename "$0")" "Using existing repo flow"
+    echo " Choose how to add files:"
     echo "1. Add all (git add .)"
-    echo "2. Add updated/tracked only (git add -u)"
+    echo "2. Add only tracked changes (git add -u)"
     echo "3. Add specific files"
-    read -p " Enter your choice (1/2/3): " add_choice
+    read -p "Your choice (1/2/3): " add_mode
 
-    case "$add_choice" in
+    case "$add_mode" in
         1) git add . ;;
         2) git add -u ;;
         3)
-            read -p " Enter file names separated by space: " file_list
+            git status
+            file_list=$(prompt_with_validation "Enter filenames (space-separated): ") || return 1
             git add $file_list
             ;;
-        *) echo " Invalid choice. No files added."; return 1 ;;
+        *)
+            echo " Invalid choice. Aborting."
+            log_json "ERROR" "$(basename "$0")" "Invalid add mode choice: $add_mode"
+            return 1
+            ;;
     esac
 
-    read -p " Enter commit message: " commit_msg
-    checker "$commit_msg" " Empty commit message not allowed" 
-
+    commit_msg=$(prompt_with_validation "Enter commit message: ") || {
+        log_json "ERROR" "$(basename "$0")" "Commit message prompt failed"
+        return 1
+    }
     git commit -m "$commit_msg"
+    log_json "INFO" "$(basename "$0")" "Committed changes in existing repo"
 
     current_branch=$(git branch --show-current)
-    echo " Pushing to origin/$current_branch..."
-    git push origin "$current_branch"
+    git push origin "$current_branch" || {
+        echo " Push failed. Check branch or remote."
+        log_json "ERROR" "$(basename "$0")" "Push failed to origin/$current_branch"
+        return 1
+    }
+
+    echo " Changes pushed to branch '$current_branch'."
+    log_json "SUCCESS" "$(basename "$0")" "Pushed to branch $current_branch"
 }
 
-# Entrypoint prompt
-read -p " Enter '1' to create a new repo, '0' to use an existing one: " choice
+# 🔁 Entrypoint
+main() {
+    log_json "INFO" "$(basename "$0")" "Script started"
+    read -p " Enter '1' to create a new repo, '0' to use an existing one: " user_choice
 
-if [ "$choice" = "1" ]; then
-    new_repo
-elif [ "$choice" = "0" ]; then
-    existing_repo
-else
-    echo " Invalid entry. Use 1 or 0."
-fi
+    if [[ "$user_choice" == "1" ]]; then
+        init_new_repo
+    elif [[ "$user_choice" == "0" ]]; then
+        push_existing_repo
+    else
+        echo " Invalid input. Please enter 1 or 0."
+        log_json "ERROR" "$(basename "$0")" "Invalid main choice: $user_choice"
+        return 1
+    fi
 
-if [ $? -eq 0 ]; then
-    echo " Push successful."
-else
-    echo " Push failed. Fix your conflicts or remote issues."
-fi
+    if [ $? -eq 0 ]; then
+        echo " Push operation completed successfully."
+    else
+        echo " Push operation failed. Check the above messages."
+        log_json "ERROR" "$(basename "$0")" "Push operation failed"
+    fi
+}
+
+# 🚨 Script starts here
+main
 
