@@ -4,13 +4,16 @@
 # Git Branch Management Utility
 # ─────────────────────────────────────────────────────
 
-# Helper: Validate non-empty input
 source ./common_utils.sh
+source ./logger.sh
+
+SCRIPT_NAME="$(basename "$0")"
 
 # List all local branches
 list_branches() {
     echo " Existing branches:"
     git branch --format="  %(refname:short)"
+    log_json "INFO" "$SCRIPT_NAME" "Listed all local branches"
 }
 
 # Switch to a branch
@@ -21,8 +24,10 @@ switch_branch() {
     if git rev-parse --verify "$branch_name" >/dev/null 2>&1; then
         git switch "$branch_name"
         echo " Switched to '$branch_name'"
+        log_json "SUCCESS" "$SCRIPT_NAME" "Switched to branch '$branch_name'"
     else
         echo " Branch '$branch_name' does not exist."
+        log_json "ERROR" "$SCRIPT_NAME" "Attempted switch to non-existent branch '$branch_name'"
     fi
 }
 
@@ -32,21 +37,33 @@ create_branch() {
 
     git checkout -b "$new_branch"
     echo " Created branch '$new_branch'"
+    log_json "SUCCESS" "$SCRIPT_NAME" "Created new branch '$new_branch'"
 
-    read -p "➡️  Switch to '$new_branch' now? (yes/no): " response
-    [[ "$response" == "yes" ]] && git switch "$new_branch"
+    read -p "   Switch to '$new_branch' now? (yes/no): " response
+    if [[ "$response" == "yes" ]]; then
+        git switch "$new_branch"
+        log_json "INFO" "$SCRIPT_NAME" "Switched to newly created branch '$new_branch'"
+    fi
 }
 
 # Delete a branch
 delete_branch() {
     list_branches
-    branch_to_delete=$(prompt_with_validation "Ente the branch name to be deleted ") || return 1
+    branch_to_delete=$(prompt_with_validation "Enter the branch name to be deleted ") || return 1
 
     if git rev-parse --verify "$branch_to_delete" >/dev/null 2>&1; then
-        read -p "⚠️  Confirm deletion of '$branch_to_delete'? (yes): " confirm
-        [[ "$confirm" == "yes" ]] && git branch -d "$branch_to_delete" && echo "✅ Deleted '$branch_to_delete'" || echo "❌ Deletion cancelled."
+        read -p "   Confirm deletion of '$branch_to_delete'? (yes): " confirm
+        if [[ "$confirm" == "yes" ]]; then
+            git branch -d "$branch_to_delete"
+            echo "✅ Deleted '$branch_to_delete'"
+            log_json "SUCCESS" "$SCRIPT_NAME" "Deleted branch '$branch_to_delete'"
+        else
+            echo "❌ Deletion cancelled."
+            log_json "INFO" "$SCRIPT_NAME" "User cancelled deletion of branch '$branch_to_delete'"
+        fi
     else
         echo " Branch '$branch_to_delete' does not exist."
+        log_json "ERROR" "$SCRIPT_NAME" "Tried to delete non-existent branch '$branch_to_delete'"
     fi
 }
 
@@ -59,6 +76,7 @@ merge_branches() {
 
     if [[ "$base" == "$feature" ]]; then
         echo " Base and feature branches cannot be the same."
+        log_json "ERROR" "$SCRIPT_NAME" "User tried merging branch '$base' into itself"
         return 1
     fi
 
@@ -66,8 +84,10 @@ merge_branches() {
         git switch "$base"
         git merge "$feature"
         echo " Merged '$feature' into '$base'"
+        log_json "SUCCESS" "$SCRIPT_NAME" "Merged '$feature' into '$base'"
     else
         echo " One or both branches do not exist."
+        log_json "ERROR" "$SCRIPT_NAME" "Invalid branches provided for merge: base='$base', feature='$feature'"
     fi
 }
 
@@ -76,14 +96,15 @@ rename_branch() {
     list_branches
 
     old_name=$(prompt_with_validation "Please enter the name of the branch to be renamed ") || return 1
-
-    new_name=$(prompt_with_validation "Please enter the new name for the exisiting branch ") || return 1
+    new_name=$(prompt_with_validation "Please enter the new name for the existing branch ") || return 1
 
     if git rev-parse --verify "$old_name" >/dev/null 2>&1; then
         git branch -m "$old_name" "$new_name"
         echo " Renamed '$old_name' to '$new_name'"
+        log_json "SUCCESS" "$SCRIPT_NAME" "Renamed branch from '$old_name' to '$new_name'"
     else
         echo " Branch '$old_name' does not exist."
+        log_json "ERROR" "$SCRIPT_NAME" "Failed to rename non-existent branch '$old_name'"
     fi
 }
 
@@ -91,6 +112,7 @@ rename_branch() {
 main_logs_menu() {
     current_branch=$(git branch --show-current)
     echo " You are currently on: $current_branch branch"
+    log_json "INFO" "$SCRIPT_NAME" "User on branch '$current_branch'"
     echo
     echo " Branch Management Options:"
     echo "1. Create a New Branch"
@@ -103,6 +125,7 @@ main_logs_menu() {
     echo
 
     option=$(prompt_with_validation "Please select a option (1 - 7) ") || return 1
+    log_json "INFO" "$SCRIPT_NAME" "User selected menu option $option"
 
     case "$option" in
         1) create_branch ;;
@@ -111,8 +134,9 @@ main_logs_menu() {
         4) delete_branch ;;
         5) merge_branches ;;
         6) rename_branch ;;
-        7) echo " Exiting branch manager." && exit 0 ;;
-        *) echo " Invalid option. Choose between 1–7." ;;
+        7) echo " Exiting branch manager." && log_json "INFO" "$SCRIPT_NAME" "User exited branch manager" && exit 0 ;;
+        *) echo " Invalid option. Choose between 1–7."
+           log_json "ERROR" "$SCRIPT_NAME" "Invalid menu option '$option' selected" ;;
     esac
 }
 
