@@ -124,16 +124,38 @@ push_existing_repo() {
     git commit -m "$commit_msg"
     log_json "INFO" "$(basename "$0")" "Committed changes in existing repo"
 
-    current_branch=$(git branch --show-current)
+    current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+    # 🧠 Check if local is behind remote
+    git fetch origin "$current_branch"
+
+    local_hash=$(git rev-parse "$current_branch")
+    remote_hash=$(git rev-parse "origin/$current_branch")
+
+    if [ "$local_hash" != "$remote_hash" ]; then
+        echo " ⚠️ Local branch '$current_branch' is different from remote."
+        read -p " Do you want to pull the latest changes before pushing? (y/n): " pull_confirm
+        if [[ "$pull_confirm" =~ ^[Yy]$ ]]; then
+            git pull --rebase origin "$current_branch" || {
+                echo " ⚠️ Pull failed. Resolve conflicts before proceeding."
+                log_json "ERROR" "$(basename "$0")" "Pull failed before push"
+                return 1
+            }
+        else
+            echo " Skipping pull. Push may be rejected if branches are out of sync."
+        fi
+    fi
+
     git push origin "$current_branch" || {
-        echo " Push failed. Check branch or remote."
+        echo "  Push failed. Remote may have changes you're missing."
         log_json "ERROR" "$(basename "$0")" "Push failed to origin/$current_branch"
         return 1
     }
 
-    echo " Changes pushed to branch '$current_branch'."
+    echo "  Changes pushed to branch '$current_branch'."
     log_json "SUCCESS" "$(basename "$0")" "Pushed to branch $current_branch"
 }
+
 
 # 🔁 Entrypoint
 main() {
