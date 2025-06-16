@@ -1,5 +1,7 @@
 #!/bin/bash
 
+"$SCRIPT_DIR/lib/stash.sh"
+
 # Validate input and set up logger
 source ./common_utils.sh
 source ./logger.sh
