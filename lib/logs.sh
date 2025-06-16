@@ -5,6 +5,8 @@
 # Author: Gibran
 # ─────────────────────────────────────────────────────
 
+"$SCRIPT_DIR/lib/logs.sh"
+
 source ./common_utils.sh
 source ./logger.sh
 
