@@ -4,6 +4,8 @@
 # Git Branch Management Utility
 # ─────────────────────────────────────────────────────
 
+"$SCRIPT_DIR/lib/push.sh"
+
 source ./common_utils.sh
 source ./logger.sh
 
