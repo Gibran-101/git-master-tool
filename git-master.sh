@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Always use the script's directory as the base
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 input_validator() {
     if [ -z "$1" ]; then
         echo "$2"
