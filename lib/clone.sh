@@ -5,6 +5,8 @@
 # Author: Gibran
 # ─────────────────────────────────────────────────────
 
+"$SCRIPT_DIR/lib/clone.sh"
+
 source ./common_utils.sh
 source ./logger.sh
 
