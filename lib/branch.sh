@@ -18,20 +18,31 @@ list_branches() {
     log_json "INFO" "$SCRIPT_NAME" "Listed all local branches"
 }
 
-# Switch to a branch
+# Switch to a branch with retry loop
 switch_branch() {
     list_branches
-    branch_name=$(prompt_with_validation "Enter the branch name to be switched: ") || return 1
 
-    if git rev-parse --verify "$branch_name" >/dev/null 2>&1; then
-        git switch "$branch_name"
-        echo " Switched to '$branch_name'"
-        log_json "SUCCESS" "$SCRIPT_NAME" "Switched to branch '$branch_name'"
-    else
-        echo " Branch '$branch_name' does not exist."
-        log_json "ERROR" "$SCRIPT_NAME" "Attempted switch to non-existent branch '$branch_name'"
-    fi
+    while true; do
+        branch_name=$(prompt_with_validation "Enter the branch name to be switched (or type 'exit' to go back): ") || return 1
+
+        if [[ "$branch_name" == "exit" ]]; then
+            echo " Aborted switching branch."
+            log_json "INFO" "$SCRIPT_NAME" "User aborted branch switch"
+            break
+        fi
+
+        if git rev-parse --verify "$branch_name" >/dev/null 2>&1; then
+            git switch "$branch_name"
+            echo "  Switched to '$branch_name'"
+            log_json "SUCCESS" "$SCRIPT_NAME" "Switched to branch '$branch_name'"
+            break
+        else
+            echo "  Branch '$branch_name' does not exist. Try again or type 'exit'."
+            log_json "ERROR" "$SCRIPT_NAME" "Invalid branch name '$branch_name' entered"
+        fi
+    done
 }
+
 
 # Create a new branch and optionally switch to it
 create_branch() {
