@@ -10,6 +10,13 @@ source ./logger.sh
 
 SCRIPT_NAME="$(basename "$0")"
 
+"$SCRIPT_DIR/lib/clone.sh"
+
+source ./common_utils.sh
+source ./logger.sh
+
+SCRIPT_NAME="$(basename "$0")"
+
 # Run SSH setup if needed
 setup_ssh_agent() {
     echo " Setting up SSH agent..."
