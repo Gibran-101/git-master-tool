@@ -24,6 +24,7 @@ declare -A SCRIPT_CODES=(
     ["revert_reset.sh"]="RS"
     ["stash.sh"]="ST"
     ["logs.sh"]="LG"
+    ["file_restore.sh"]="RE"
     ["git-master.sh"]="GM"
 )
 
