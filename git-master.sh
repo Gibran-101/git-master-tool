@@ -3,12 +3,7 @@
 # Always use the script's directory as the base
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-input_validator() {
-    if [ -z "$1" ]; then
-        echo "$2"
-        return 1
-    fi
-}
+source ./common_utils.sh
 
 push_strategies(){ ./lib/push.sh; }
 clone_repo(){ ./lib/clone.sh; }
@@ -29,8 +24,8 @@ master_control() {
     echo "6. Git Stash Operations"
     echo "7. Git Log Viewer"
     echo "8. Exit"
-    read -p "Please select the option you desire to proceed with: " usr_choice
-    input_validator "$usr_choice" "Please select a valid option"
+    
+    usr_choice=$(prompt_with_validation "Please select the option you desire to proceed with: ") || return 1
 
     case "$usr_choice" in
         1) push_strategies ;;
