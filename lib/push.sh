@@ -40,12 +40,14 @@ init_new_repo() {
 
     git add $files_to_add
 
-    commit_msg=$(prompt_with_validation "Enter commit message: ") || {
-        log_json "ERROR" "$(basename "$0")" "Commit message prompt failed"
-        return 1
+    commit_msg=$(generate_commit_msg) || {
+    	log_json "ERROR" "$(basename "$0")" "Failed to generate commit message"
+    	return 1
     }
+
     git commit -m "$commit_msg"
-    log_json "INFO" "$(basename "$0")" "Committed changes"
+    log_json "INFO" "$(basename "$0")" "Committed changes with AI message"
+
 
     branch_response=$(prompt_with_validation "The default branch name is 'master'. Do you want to change it (y/ n): ") || return 1
     if [[ "$branch_response" =~ ^[Yy]$ ]]; then
