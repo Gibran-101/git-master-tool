@@ -5,9 +5,8 @@
 # Author: Gibran
 # ─────────────────────────────────────────────────────
 
-
-source ./common_utils.sh
-source ./logger.sh
+source "$SCRIPT_DIR/../common_utils.sh"
+source "$SCRIPT_DIR/../logger.sh"
 
 SCRIPT_NAME="$(basename "$0")"
 

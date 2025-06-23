@@ -1,7 +1,8 @@
 #!/bin/bash
 
-source ./logger.sh
-source ./common_utils.sh
+source "$SCRIPT_DIR/../common_utils.sh"
+source "$SCRIPT_DIR/../logger.sh"
+
 
 # 🧠 Check if 'origin' already set
 ensure_remote_origin() {
