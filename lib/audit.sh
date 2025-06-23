@@ -8,8 +8,10 @@
 # Optional, only if this file gets called from a wrapper
 # "$SCRIPT_DIR/lib/audit.sh"
 
-source "$SCRIPT_DIR/../common_utils.sh"
-source "$SCRIPT_DIR/../logger.sh"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+source "$SCRIPT_DIR/common_utils.sh"
+source "$SCRIPT_DIR/logger.sh"
 
 SCRIPT_NAME="$(basename "$0")"
 
