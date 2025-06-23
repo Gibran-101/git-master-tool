@@ -162,12 +162,36 @@ push_existing_repo() {
 # 🔁 Entrypoint
 main() {
     log_json "INFO" "$(basename "$0")" "Script started"
+
+    echo ""
+    echo " Git Push Tool"
+    echo "1. Create a NEW Git repository"
+    echo "0. Use an EXISTING Git repository"
+    echo ""
+
     read -p " Enter '1' to create a new repo, '0' to use an existing one: " user_choice
 
     if [[ "$user_choice" == "1" ]]; then
         init_new_repo
     elif [[ "$user_choice" == "0" ]]; then
-        push_existing_repo
+        # Check if .git exists
+        if [ -d .git ]; then
+            push_existing_repo
+        else
+            echo ""
+            echo " No .git directory found. Looks like this project isn't a Git repo."
+            echo " Did you delete the .git folder or clone incorrectly?"
+            echo ""
+
+            read -p " Do you want to reconnect this directory to an existing remote repo? (y/n): " reconnect_choice
+            if [[ "$reconnect_choice" =~ ^[Yy]$ ]]; then
+                init_new_repo
+            else
+                echo " Aborting. Please initialize the repo manually or run the script again."
+                log_json "ERROR" "$(basename "$0")" "User aborted reconnect flow"
+                return 1
+            fi
+        fi
     else
         echo " Invalid input. Please enter 1 or 0."
         log_json "ERROR" "$(basename "$0")" "Invalid main choice: $user_choice"
@@ -181,7 +205,4 @@ main() {
         log_json "ERROR" "$(basename "$0")" "Push operation failed"
     fi
 }
-
-# 🚨 Script starts here
-main
 
