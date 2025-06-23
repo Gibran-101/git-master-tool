@@ -3,15 +3,15 @@
 # Always use the script's directory as the base
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-source ./common_utils.sh
+source "$SCRIPT_DIR/common_utils.sh"
 
-push_strategies(){ ./lib/push.sh; }
-clone_repo(){ ./lib/clone.sh; }
-branch_mgmt(){ ./lib/branch.sh; }
-pull_strategies(){ ./lib/pull.sh; }
-revert_reset_options(){ ./lib/revert_reset.sh; }
-stash_operations(){ ./lib/stash.sh; }
-log_viewer(){ ./lib/logs.sh; }
+push_strategies(){ bash "$SCRIPT_DIR/lib/push.sh"; }
+clone_repo(){ bash "$SCRIPT_DIR/lib/clone.sh"; }
+branch_mgmt(){ bash "$SCRIPT_DIR/lib/branch.sh"; }
+pull_strategies(){ bash "$SCRIPT_DIR/lib/pull.sh"; }
+revert_reset_options(){ bash "$SCRIPT_DIR/lib/revert_reset.sh"; }
+stash_operations(){ bash "$SCRIPT_DIR/lib/stash.sh"; }
+log_viewer(){ bash "$SCRIPT_DIR/lib/logs.sh"; }
 
 master_control() {
     echo ""
