@@ -5,7 +5,6 @@
 # Author: Gibran
 # -------------------------
 
-"$SCRIPT_DIR/lib/revert_reset.sh"
 
 source ./common_utils.sh
 source ./logger.sh

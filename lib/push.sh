@@ -1,7 +1,5 @@
 #!/bin/bash
 
-"$SCRIPT_DIR/lib/push.sh"
-
 source ./logger.sh
 source ./common_utils.sh
 

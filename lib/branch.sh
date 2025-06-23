@@ -4,7 +4,6 @@
 # Git Branch Management Utility
 # ─────────────────────────────────────────────────────
 
-"$SCRIPT_DIR/lib/branch.sh"
 
 source ./common_utils.sh
 source ./logger.sh
