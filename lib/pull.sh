@@ -5,10 +5,10 @@
 # Author: Gibran
 # ============================
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+"$SCRIPT_DIR/lib/pull.sh"
 
-source "$SCRIPT_DIR/common_utils.sh"
-source "$SCRIPT_DIR/logger.sh"
+source ./common_utils.sh
+source ./logger.sh
 
 SCRIPT_NAME="$(basename "$0")"
 
@@ -83,4 +83,3 @@ else
     echo " Pull failed. Fix your conflicts or remote issues like you fix your bad habits — slowly and with guidance."
     log_json "ERROR" "$SCRIPT_NAME" "Git pull failed for $remote/$branch"
 fi
-
