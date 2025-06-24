@@ -5,10 +5,10 @@
 # Author: Gibran
 # ============================
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+"$SCRIPT_DIR/lib/pull.sh"
 
-source "$SCRIPT_DIR/common_utils.sh"
-source "$SCRIPT_DIR/logger.sh"
+source ./common_utils.sh
+source ./logger.sh
 
 SCRIPT_NAME="$(basename "$0")"
 
@@ -35,10 +35,10 @@ log_json "INFO" "$SCRIPT_NAME" "Branch selected: $branch"
 choose_strategy() {
     echo ""
     echo "Choose your pull strategy:"
-    echo "1. Merge (default)"
-    echo "2. Rebase"
-    echo "3. Fast-forward only"
-    echo "4. Allow unrelated histories"
+    echo "1. Merge (default) — keeps both your and remote changes as separate commits"
+    echo "2. Rebase — puts your changes on top of remote like a clean stack"
+    echo "3. Fast-forward only — allows pull only if no merge is needed"
+    echo "4. Allow unrelated histories — used when repos don't share a common history"
     choice=$(prompt_with_validation "Your choice: ") || return 1
 
     local flag=""
@@ -83,4 +83,3 @@ else
     echo " Pull failed. Fix your conflicts or remote issues like you fix your bad habits — slowly and with guidance."
     log_json "ERROR" "$SCRIPT_NAME" "Git pull failed for $remote/$branch"
 fi
-
