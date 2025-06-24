@@ -5,34 +5,44 @@
 # Author: Gibran
 # ─────────────────────────────────────────────────────
 
-"$SCRIPT_DIR/lib/clone.sh"
+# Must be sourced with SCRIPT_DIR set
+if [[ -z "$SCRIPT_DIR" ]]; then
+    echo " ERROR: SCRIPT_DIR not set in clone.sh"
+    return 1
+fi
 
-source ./common_utils.sh
-source ./logger.sh
+source "$SCRIPT_DIR/common_utils.sh"
+source "$SCRIPT_DIR/logger.sh"
 
-SCRIPT_NAME="$(basename "$0")"
+SCRIPT_NAME="clone.sh"
 
-# Run SSH setup if needed
-setup_ssh_agent() {
-    echo " Setting up SSH agent..."
-    eval "$(ssh-agent -s)" >/dev/null
+clone_master() {
+    # -------------------------------
+    #  Setup SSH agent
+    # -------------------------------
+    setup_ssh_agent() {
+        echo " Setting up SSH agent..."
+        eval "$(ssh-agent -s)" >/dev/null
 
-    read -p "  Enter path to your private SSH key (default: ~/.ssh/id_rsa): " ssh_key
-    ssh_key=${ssh_key:-~/.ssh/id_rsa}
+        local ssh_key
+        ssh_key=$(prompt_with_validation "Enter path to your SSH key (default: ~/.ssh/id_rsa)") || return 1
+        ssh_key=${ssh_key:-~/.ssh/id_rsa}
 
-    if [ -f "$ssh_key" ]; then
-        ssh-add "$ssh_key"
-        log_json "SUCCESS" "$SCRIPT_NAME" "SSH key added: $ssh_key"
-    else
-        echo " SSH key not found at $ssh_key"
-        echo " Fix the path or generate a key using: ssh-keygen -t rsa"
-        log_json "ERROR" "$SCRIPT_NAME" "SSH key not found at $ssh_key"
-        return 1
-    fi
-}
+        if [ -f "$ssh_key" ]; then
+            ssh-add "$ssh_key"
+            log_json "SUCCESS" "$SCRIPT_NAME" "SSH key added: $ssh_key"
+        else
+            echo "  SSH key not found at $ssh_key"
+            echo "    Generate one with: ssh-keygen -t rsa"
+            log_json "ERROR" "$SCRIPT_NAME" "SSH key not found at $ssh_key"
+            return 1
+        fi
+    }
 
-# Perform the clone
-clone_repo() {
+    # -------------------------------
+    #  Clone Repo
+    # -------------------------------
+    local url_choice
     url_choice=$(prompt_with_validation "Choose URL format (https/ ssh): ") || return 1
     log_json "INFO" "$SCRIPT_NAME" "User selected URL format: $url_choice"
 
@@ -42,6 +52,7 @@ clone_repo() {
         return 1
     fi
 
+    local url
     url=$(prompt_with_validation "Enter the Git repository URL to clone: ") || return 1
     log_json "INFO" "$SCRIPT_NAME" "Repository URL received for cloning"
 
@@ -51,17 +62,12 @@ clone_repo() {
 
     echo " Cloning from: $url"
     if git clone "$url"; then
-        echo " Clone successful!"
+        echo "  Clone successful!"
         log_json "SUCCESS" "$SCRIPT_NAME" "Cloned repository from $url"
     else
-        echo " Clone failed. Check your URL or authentication method."
+        echo "  Clone failed. Check your URL or authentication method."
         log_json "ERROR" "$SCRIPT_NAME" "Failed to clone from $url"
         return 1
     fi
 }
-
-# Run directly only if script is not sourced
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    clone_repo
-fi
 
