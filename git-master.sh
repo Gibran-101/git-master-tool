@@ -5,13 +5,27 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 source "$SCRIPT_DIR/common_utils.sh"
 
-push_strategies(){ bash "$SCRIPT_DIR/lib/push.sh"; }
-clone_repo(){ bash "$SCRIPT_DIR/lib/clone.sh"; }
-branch_mgmt(){ bash "$SCRIPT_DIR/lib/branch.sh"; }
-pull_strategies(){ bash "$SCRIPT_DIR/lib/pull.sh"; }
-revert_reset_options(){ bash "$SCRIPT_DIR/lib/revert_reset.sh"; }
-stash_operations(){ bash "$SCRIPT_DIR/lib/stash.sh"; }
-log_viewer(){ bash "$SCRIPT_DIR/lib/logs.sh"; }
+source "$SCRIPT_DIR/lib/push.sh"
+push_strategies(){ push_master; }
+
+source "$SCRIPT_DIR/lib/pull.sh"
+pull_strategies(){ pull_master; }
+
+source "$SCRIPT_DIR/lib/branch.sh"
+branch_mgmt(){ branch_master; }
+
+source "$SCRIPT_DIR/lib/clone.sh"
+clone_repo(){ clone_master; }
+
+source "$SCRIPT_DIR/lib/logs.sh"
+log_viewer(){ logs_master; }
+
+source "$SCRIPT_DIR/lib/revert_reset.sh"
+revert_reset_options(){ revert_reset_master; }
+
+source "$SCRIPT_DIR/lib/stash.sh"
+stash_operations(){ stash_master; }
+
 
 master_control() {
     echo ""
